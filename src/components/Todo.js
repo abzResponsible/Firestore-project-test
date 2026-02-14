@@ -80,7 +80,6 @@ const Todo = () => {
 
   return (
     <>
-    <Header />
       <div className="container">
         <div className="row">
           <div className="col-md-12">
@@ -154,12 +153,12 @@ const Todo = () => {
           </form>
         </div>
       </div>
-    <Footer />
     </>
   )
 }
 
 export default Todo;
+
 
 
 
