@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { collection, addDoc, serverTimestamp, getDocs, doc, deleteDoc, runTransaction, orderBy, query } from 'firebase/firestore'
 import EditTodo from './EditTodo'
 import { db } from '../services/firebase.config'
-import Header from 'Header.js';
-import Footer from 'Footer.js';
+import Header from './Header.js';
+import Footer from './Footer.js';
 
 const Todo = () => {
   const [createTodo, setCreateTodo] = useState("")
@@ -159,4 +159,5 @@ const Todo = () => {
 }
 
 export default Todo;
+
 
