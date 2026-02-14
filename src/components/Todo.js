@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { collection, addDoc, serverTimestamp, getDocs, doc, deleteDoc, runTransaction, orderBy, query } from 'firebase/firestore'
 import EditTodo from './EditTodo'
 import { db } from '../services/firebase.config'
+import Header from 'Header.js';
+import Footer from 'Footer.js';
 
 const Todo = () => {
   const [createTodo, setCreateTodo] = useState("")
@@ -83,6 +85,7 @@ const Todo = () => {
           <div className="col-md-12">
             <div className="card card-white">
               <div className="card-body">
+              <Header /> 
                 <button
                   data-bs-toggle="modal"
                   data-bs-target="#addModal"
@@ -116,6 +119,7 @@ const Todo = () => {
                         className="btn btn-danger float-end"
                         onClick={() => deleteTodo(id)}
                       >Delete</button>
+                          <Footer />
                     </div>
                   </div>
                 )}
@@ -155,3 +159,4 @@ const Todo = () => {
 }
 
 export default Todo;
+
