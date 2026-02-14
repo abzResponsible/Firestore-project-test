@@ -80,12 +80,13 @@ const Todo = () => {
 
   return (
     <>
+    <Header />
       <div className="container">
         <div className="row">
           <div className="col-md-12">
             <div className="card card-white">
               <div className="card-body">
-              <Header /> 
+              
                 <button
                   data-bs-toggle="modal"
                   data-bs-target="#addModal"
@@ -119,7 +120,6 @@ const Todo = () => {
                         className="btn btn-danger float-end"
                         onClick={() => deleteTodo(id)}
                       >Delete</button>
-                          <Footer />
                     </div>
                   </div>
                 )}
@@ -154,10 +154,12 @@ const Todo = () => {
           </form>
         </div>
       </div>
+    <Footer />
     </>
   )
 }
 
 export default Todo;
+
 
 
