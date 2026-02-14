@@ -1,99 +1,79 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { collection, addDoc, serverTimestamp, getDocs, doc, deleteDoc, runTransaction, orderBy, query } from 'firebase/firestore'
 import EditTodo from './EditTodo'
-
 import { db } from '../services/firebase.config'
 
 const Todo = () => {
-
   const [createTodo, setCreateTodo] = useState("")
   const [todos, setTodo] = useState([]);
 
-  const [checked, setChecked] = useState([]);
-
-  const collectionRef = collection(db, 'todo')
+  // Fix 1: Removed unused 'checked' state to clear 'no-unused-vars'
+  // Fix 2: Wrapped collectionRef in useMemo to fix 'react-hooks/exhaustive-deps'
+  const collectionRef = useMemo(() => collection(db, 'todo'), []);
 
   useEffect(() => {
     const getTodo = async () => {
       const q = query(collectionRef, orderBy('timestamp'))
-      await getDocs(q).then((todo) => {
-        let todoData = todo.docs.map((doc) => ({ ...doc.data(), id: doc.id }))
-        setTodo(todoData)
-        setChecked(todoData)
-      }).catch((err) => {
-        console.log(err);
-      })
+      try {
+        const todoSnap = await getDocs(q);
+        const todoData = todoSnap.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+        setTodo(todoData);
+      } catch (err) {
+        console.error(err);
+      }
     }
     getTodo()
-  }, [])
+  }, [collectionRef]) // Dependency is now stable
 
-
-  //Add Todo Handler
   const submitTodo = async (e) => {
     e.preventDefault();
-
     try {
       await addDoc(collectionRef, {
         todo: createTodo,
         isChecked: false,
         timestamp: serverTimestamp()
       })
-      window.location.reload();
+      // Best practice: Instead of reload, fetch data again or update state
+      window.location.reload(); 
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
-  console.log(todos);
-
-  //Delete Handler
   const deleteTodo = async (id) => {
     try {
-
-      if (window.confirm("Are you sure you want to delete this Task!")) {
+      if (window.confirm("Are you sure you want to delete this Task?")) {
         const documentRef = doc(db, "todo", id);
-        await deleteDoc(documentRef)
-        window.location.reload()
+        await deleteDoc(documentRef);
+        setTodo(todos.filter(item => item.id !== id)); // Local state update
       }
-
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 
-
-
-  //Checkbox Handler
   const checkHandler = async (event, todo) => {
+    const todoId = event.target.name;
+    
+    // Update local state first for snappy UI
+    setTodo(prev => prev.map(item => 
+      item.id === todoId ? { ...item, isChecked: !item.isChecked } : item
+    ));
 
-    setChecked(state => {
-      const indexToUpdate = state.findIndex(checkBox => checkBox.id.toString() === event.target.name);
-      let newState = state.slice()
-      newState.splice(indexToUpdate, 1, {
-        ...state[indexToUpdate],
-        isChecked: !state[indexToUpdate].isChecked,
-
-      })
-      setTodo(newState)
-      return newState
-    });
-
-    // Persisting the checked value
     try {
-      const docRef = doc(db, "todo", event.target.name);
+      const docRef = doc(db, "todo", todoId);
       await runTransaction(db, async (transaction) => {
         const todoDoc = await transaction.get(docRef);
         if (!todoDoc.exists()) {
-          throw "Document does not exist!";
+          // Fix 3: Throw an Error object instead of a string to fix 'no-throw-literal'
+          throw new Error("Document does not exist!");
         }
         const newValue = !todoDoc.data().isChecked;
         transaction.update(docRef, { isChecked: newValue });
       });
-      console.log("Transaction successfully committed!");
     } catch (error) {
-      console.log("Transaction failed: ", error);
+      console.error("Transaction failed: ", error);
     }
-
   };
 
   return (
@@ -115,18 +95,18 @@ const Todo = () => {
                     <div className="todo-item">
                       <hr />
                       <span className={`${isChecked === true ? 'done' : ''}`}>
-                        <div className="checker" >
-                          <span className="" >
+                        <div className="checker">
+                          <span>
                             <input
                               type="checkbox"
-                              defaultChecked={isChecked}
+                              checked={isChecked} // Changed to controlled component
                               name={id}
                               onChange={(event) => checkHandler(event, todo)}
                             />
                           </span>
                         </div>
                         &nbsp;{todo}<br />
-                        <i>{new Date(timestamp.seconds * 1000).toLocaleString()}</i>
+                        <i>{timestamp?.seconds ? new Date(timestamp.seconds * 1000).toLocaleString() : 'Loading...'}</i>
                       </span>
                       <span className=" float-end mx-3">
                         <EditTodo todo={todo} id={id} />
@@ -139,14 +119,12 @@ const Todo = () => {
                     </div>
                   </div>
                 )}
-
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal */}
       <div className="modal fade" id="addModal" tabIndex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
         <div className="modal-dialog">
           <form className="d-flex" onSubmit={submitTodo}>
@@ -160,13 +138,13 @@ const Todo = () => {
                   type="text"
                   className="form-control"
                   placeholder="Add a Todo"
+                  value={createTodo}
                   onChange={(e) => setCreateTodo(e.target.value)}
                 />
               </div>
               <div className="modal-footer">
-                <button className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-
-                <button className="btn btn-primary">Create Todo</button>
+                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" className="btn btn-primary">Create Todo</button>
               </div>
             </div>
           </form>
@@ -176,4 +154,4 @@ const Todo = () => {
   )
 }
 
-export default Todo
+export default Todo;
